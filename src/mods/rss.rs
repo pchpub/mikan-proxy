@@ -4,17 +4,11 @@ use quick_xml::writer::Writer;
 use std::io::Cursor;
 use url::Url;
 
-pub async fn get_mybangumi_rss(token: &str) -> Result<String, ()> {
-    let url = format!("https://mikan.proxy.pch.pub/RSS/MyBangumi?token={}", token);
+use super::request::async_get_string;
 
-    let client = reqwest::Client::new();
-    let resp = client
-        .get(&url)
-        .header("User-Agent", "bangumi-rss-proxy")
-        .send()
-        .await
-        .map_err(|_| ())?;
-    let resp_text = resp.text().await.map_err(|_| ())?;
+pub async fn get_mybangumi_rss(token: &str) -> Result<String, ()> {
+    let url = format!("https://mikanani.me/RSS/MyBangumi?token={}", token);
+    let resp_text = async_get_string(&url).await?;
     Ok(resp_text)
 }
 
@@ -166,7 +160,10 @@ pub async fn edit_mybangumi_rss(raw_rss_data: &str, domain: &str) -> Result<Stri
                     writer.write_event(e).or(Err(()))?;
                 }
             }
-            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Err(_e) => {
+                // panic!("Error at position {}: {:?}", reader.buffer_position(), e)
+                return Err(());
+            }
         }
     }
 
